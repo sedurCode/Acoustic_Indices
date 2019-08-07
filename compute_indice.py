@@ -25,8 +25,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-
-#--------------------------------------------------------------------------------------------------------------------------------------------------
 def compute_spectrogram(file, windowLength=512, windowHop= 256, scale_audio=True, square=True, windowType='hanning', centered=False, normalized = False ):
     """
     Compute a spectrogram of an audio signal.
@@ -51,32 +49,29 @@ def compute_spectrogram(file, windowLength=512, windowHop= 256, scale_audio=True
     else:
         sig = file.sig_int # use signal with integers
 
-
-    W = signal.get_window(windowType, windowLength, fftbins=False)
+    W = signal.get_window(windowType, int(windowLength), fftbins=False)
 
     if centered:
         time_shift = int(windowLength/2)
         times = range(time_shift, len(sig)+1-time_shift, windowHop) # centered
         frames = [sig[i-time_shift:i+time_shift]*W for i in times] # centered frames
     else:
-        times = range(0, len(sig)-windowLength+1, windowHop)
-        frames = [sig[i:i+windowLength]*W for i in times]
+        times = range(0, len(sig)-int(windowLength)+1, int(windowHop))
+        frames = [sig[i:i+int(windowLength)]*W for i in times]
 
     if square:
-        spectro =  [abs(np.fft.rfft(frame, windowLength))[0:windowLength/2]**2 for frame in frames]
+        spectro = [abs(np.fft.rfft(frame, int(windowLength)))[0:int(windowLength/2)]**2 for frame in frames]
     else:
-        spectro =  [abs(np.fft.rfft(frame, windowLength))[0:windowLength/2] for frame in frames]
+        spectro = [abs(np.fft.rfft(frame, int(windowLength)))[0:int(windowLength/2)] for frame in frames]
+
 
     spectro=np.transpose(spectro) # set the spectro in a friendly way
 
     if normalized:
         spectro = spectro/np.max(spectro) # set the maximum value to 1 y
 
-    frequencies = [e * file.niquist / float(windowLength / 2) for e in range(windowLength / 2)] # vector of frequency<-bin in the spectrogram
+    frequencies = [e * file.niquist / float(windowLength / 2) for e in range(int(windowLength / 2))] # vector of frequency<-bin in the spectrogram
     return spectro, frequencies
-
-
-
 
 
 #-----------------------------------------------------------------------------
@@ -95,18 +90,15 @@ def compute_ACI(spectro,j_bin):
     """
 
     #times = range(0, spectro.shape[1], j_bin) # relevant time indices
-    times = range(0, spectro.shape[1]-10, j_bin) # alternative time indices to follow the R code
+    times = range(0, spectro.shape[1]-10, int(j_bin)) # alternative time indices to follow the R code
 
-    jspecs = [np.array(spectro[:,i:i+j_bin]) for i in times]  # sub-spectros of temporal size j
+    jspecs = [np.array(spectro[:,i:i+int(j_bin)]) for i in times]  # sub-spectros of temporal size j
 
     aci = [sum((np.sum(abs(np.diff(jspec)), axis=1) / np.sum(jspec, axis=1))) for jspec in jspecs] 	# list of ACI values on each jspecs
     main_value = sum(aci)
     temporal_values = aci
 
     return main_value, temporal_values # return main (global) value, temporal values
-
-
-
 
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -127,11 +119,7 @@ def compute_BI(spectro, frequencies, min_freq = 2000, max_freq = 8000):
 
     min_freq_bin = int(np.argmin([abs(e - min_freq) for e in frequencies])) # min freq in samples (or bin)
     max_freq_bin = int(np.ceil(np.argmin([abs(e - max_freq) for e in frequencies]))) # max freq in samples (or bin)
-
     min_freq_bin = min_freq_bin - 1 # alternative value to follow the R code
-
-
-
     spectro_BI = 20 * np.log10(spectro/np.max(spectro))  #  Use of decibel values. Equivalent in the R code to: spec_left <- spectro(left, f = samplingrate, wl = fft_w, plot = FALSE, dB = "max0")$amp
     spectre_BI_mean = 10 * np.log10 (np.mean(10 ** (spectro_BI/10), axis=1))     # Compute the mean for each frequency (the output is a spectre). This is not exactly the mean, but it is equivalent to the R code to: return(a*log10(mean(10^(x/a))))
     spectre_BI_mean_segment =  spectre_BI_mean[min_freq_bin:max_freq_bin]   # Segment between min_freq and max_freq
@@ -155,10 +143,6 @@ def compute_SH(spectro):
     main_value = - sum([y * np.log2(y) for y in spec]) / np.log2(N)  #Equivalent in the R code to: z <- -sum(spec*log(spec))/log(N)
     #temporal_values = [- sum([y * np.log2(y) for y in frame]) / (np.sum(frame) * np.log2(N)) for frame in spectro.T]
     return main_value
-
-
-
-
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 def compute_TH(file, integer=True):
@@ -252,7 +236,7 @@ def compute_AEI(spectro, freq_band_Hz, max_freq=10000, db_threshold=-50, freq_st
     bands_bin = [f / freq_band_Hz for f in bands_Hz]
 
     spec_AEI = 20*np.log10(spectro/np.max(spectro))
-    spec_AEI_bands = [spec_AEI[bands_bin[k]:bands_bin[k]+bands_bin[1],] for k in range(len(bands_bin))]
+    spec_AEI_bands = [spec_AEI[int(bands_bin[int(k)]):int(bands_bin[int(k)]+bands_bin[1]),] for k in range(len(bands_bin))]
 
     values = [np.sum(spec_AEI_bands[k]>db_threshold)/float(spec_AEI_bands[k].size) for k in range(len(bands_bin))]
 
@@ -280,7 +264,7 @@ def compute_ADI(spectro, freq_band_Hz,  max_freq=10000, db_threshold=-50, freq_s
     bands_bin = [f / freq_band_Hz for f in bands_Hz]
 
     spec_ADI = 20*np.log10(spectro/np.max(spectro))
-    spec_ADI_bands = [spec_ADI[bands_bin[k]:bands_bin[k]+bands_bin[1],] for k in range(len(bands_bin))]
+    spec_ADI_bands = [spec_ADI[int(bands_bin[int(k)]):int(bands_bin[int(k)]+bands_bin[1]),] for k in range(len(bands_bin))]
 
     values = [np.sum(spec_ADI_bands[k]>db_threshold)/float(spec_ADI_bands[k].size) for k in range(len(bands_bin))]
 
@@ -393,8 +377,10 @@ def compute_wave_SNR(file, frame_length_e=512, min_DB=-60, window_smoothing_e=5,
     hist, bin_edges = np.histogram(wave_env, range=(minimum, minimum + dB_range), bins=hist_number_bins, density=False)
 
 
-    hist_smooth = ([np.mean(hist[i - window_smoothing_e/2: i + window_smoothing_e/2]) for i in range(window_smoothing_e/2, len(hist) - window_smoothing_e/2)])
-    hist_smooth = np.concatenate((np.zeros(window_smoothing_e/2), hist_smooth, np.zeros(window_smoothing_e/2)))
+    # hist_smooth = ([np.mean(hist[i - window_smoothing_e/2: i + window_smoothing_e/2]) for i in range(window_smoothing_e/2, len(hist) - window_smoothing_e/2)])
+    hist_smooth = ([np.mean(hist[i - int(window_smoothing_e / 2): i + int(window_smoothing_e / 2)]) for i in
+                    range(int(window_smoothing_e / 2), len(hist) - int(window_smoothing_e / 2))])
+    hist_smooth = np.concatenate((np.zeros(int(window_smoothing_e/2)), hist_smooth, np.zeros(int(window_smoothing_e/2))))
 
     modal_intensity = np.argmax(hist_smooth)
 
@@ -423,10 +409,10 @@ def compute_wave_SNR(file, frame_length_e=512, min_DB=-60, window_smoothing_e=5,
     end_event = [n[0] for n in np.argwhere((SN[:-1] > 0) & (SN[1:] < 0))]
     if len(start_event)!=0 and len(end_event)!=0:
         if start_event[0]<end_event[0]:
-            events=zip(start_event, end_event)
+            events = zip(start_event, end_event)
         else:
-            events=zip(end_event, start_event)
-        count_acoustic_events = len(events)
+            events = zip(end_event, start_event)
+        count_acoustic_events = len(tuple(events))
         average_duration_e = np.mean([end - begin for begin,end in events] )
         average_duration_s = average_duration_e * file.duration / float(len(SN))
     else:
@@ -466,27 +452,25 @@ def remove_noiseInSpectro(spectro, histo_relative_size=8, window_smoothing=5, N=
         spectro = 20*np.log10(spectro)
 
     len_spectro_e = len(spectro[0])
-    histo_size = len_spectro_e/histo_relative_size
+    histo_size = int(len_spectro_e/histo_relative_size)
 
-    background_noise=[]
+    background_noise = []
     for row in spectro:
         hist, bin_edges = np.histogram(row, bins=histo_size, density=False)
 
-        hist_smooth = ([np.mean(hist[i - window_smoothing /2: i + window_smoothing /2]) for i in range(window_smoothing /2, len(hist) - window_smoothing /2)])
-        hist_smooth = np.concatenate((np.zeros(window_smoothing/2), hist_smooth, np.zeros(window_smoothing /2)))
-
-
+        hist_smooth = ([np.mean(hist[i - int(window_smoothing /2): i + int(window_smoothing /2)]) for i in range(int(window_smoothing /2), len(hist) - int(window_smoothing /2))])
+        hist_smooth = np.concatenate((np.zeros(int(window_smoothing/2)), hist_smooth, np.zeros(int(window_smoothing /2))))
         modal_intensity = np.min([np.argmax(hist_smooth), 95 * histo_size / 100]) # test if modal intensity value is in the top 5%
 
-        if N>0:
+        if N > 0:
             count_thresh = 68 * sum(hist_smooth) / 100
-            count = hist_smooth[modal_intensity]
+            count = hist_smooth[int(modal_intensity)]
             index_bin = 1
             while count < count_thresh:
-                if modal_intensity + index_bin <= len(hist_smooth):
-                    count = count + hist_smooth[modal_intensity + index_bin]
+                if modal_intensity + index_bin <= (len(hist_smooth) - 1):
+                    count = count + hist_smooth[int(modal_intensity + index_bin)]
                 if modal_intensity - index_bin >= 0:
-                    count = count + hist_smooth[modal_intensity - index_bin]
+                    count = count + hist_smooth[int(modal_intensity - index_bin)]
                 index_bin += 1
             thresh = int(np.min((histo_size, modal_intensity + N * index_bin)))
             background_noise.append(bin_edges[thresh])
@@ -494,9 +478,9 @@ def remove_noiseInSpectro(spectro, histo_relative_size=8, window_smoothing=5, N=
             background_noise.append(bin_edges[modal_intensity])
 
 
-    background_noise_smooth = ([np.mean(background_noise[i - window_smoothing /2: i + window_smoothing /2]) for i in range(window_smoothing /2, len(background_noise) - window_smoothing /2)])
+    background_noise_smooth = ([np.mean(background_noise[i - int(window_smoothing /2): i + int(window_smoothing /2)]) for i in range(int(window_smoothing /2), len(background_noise) - int(window_smoothing /2))])
     # keep background noise at the end to avoid last row problem (last bin with old microphones)
-    background_noise_smooth = np.concatenate((background_noise[0:(window_smoothing/2)], background_noise_smooth, background_noise[-(window_smoothing/2):]))
+    background_noise_smooth = np.concatenate((background_noise[0:int(window_smoothing/2)], background_noise_smooth, background_noise[-int(window_smoothing/2):]))
 
     new_spec = np.array([col - background_noise_smooth for col in spectro.T]).T
     new_spec = new_spec.clip(min=low_value) # replace negative values by value close to zero
@@ -564,4 +548,3 @@ def compute_NB_peaks(spectro, frequencies, freqband = 200, normalization= True, 
     peak_freqs = [frequencies[p] for p in peaks_indices] # Frequencies of the peaks
 
     return len(peaks_indices)
-
