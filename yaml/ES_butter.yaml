@@ -1,0 +1,47 @@
+# 22 february 2016
+
+---
+Filtering:
+  type: butterworth
+  order: 8
+  frequency: 300
+
+Indices:
+
+  Acoustic_Complexity_Index:
+    function: compute_ACI
+    spectro:
+      windowLength: 512
+      windowHop: 512
+      scale_audio: False
+      square: False
+      windowType: hamming
+      centered: False
+      normalized: True
+    arguments:
+      j_bin: 5 # j_bin in seconds
+
+  Normalized_Difference_Sound_Index:
+    function: compute_NDSI
+    arguments:
+      windowLength: 1024
+      anthrophony: [1000,2000]
+      biophony: [2000,11000]
+
+  Spectral_Entropy:
+    function: compute_SH
+    spectro:
+      windowLength: 512
+      windowHop: 256
+      scale_audio: True
+      square: False
+      windowType: hanning
+      centered: False
+      normalized: False
+
+  Temporal_Entropy:
+    function: compute_TH
+    arguments:
+      integer: True #if true, use an audio signal of integers
+
+...
