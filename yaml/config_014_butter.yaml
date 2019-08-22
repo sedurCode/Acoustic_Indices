@@ -35,7 +35,6 @@ Indices:
       db_threshold: -50
       freq_step: 1000
 
-
   Bio_acoustic_Index:
     function: compute_BI
     spectro:
