@@ -108,7 +108,8 @@ class AudioFile(object):
             if len(sig.shape)>1:
                 if verbose:
                     print('\tThe audio file contains more than one channel. Only the channel', default_channel, 'will be used.')
-                    sig=sig[:, default_channel] # Assign default channel
+                sig = sig[:, default_channel] # Assign default channel
+            sig = sig / max(abs(sig))
             self.sr = sr
             self.sig_int = sig.astype(int)
             self.sig_float = sig

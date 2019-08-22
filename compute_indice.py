@@ -454,7 +454,7 @@ def remove_noiseInSpectro(spectro, histo_relative_size=8, window_smoothing=5, N=
     len_spectro_e = len(spectro[0])
     histo_size = int(len_spectro_e/histo_relative_size)
 
-    background_noise=[]
+    background_noise = []
     for row in spectro:
         hist, bin_edges = np.histogram(row, bins=histo_size, density=False)
 
@@ -462,12 +462,12 @@ def remove_noiseInSpectro(spectro, histo_relative_size=8, window_smoothing=5, N=
         hist_smooth = np.concatenate((np.zeros(int(window_smoothing/2)), hist_smooth, np.zeros(int(window_smoothing /2))))
         modal_intensity = np.min([np.argmax(hist_smooth), 95 * histo_size / 100]) # test if modal intensity value is in the top 5%
 
-        if N>0:
+        if N > 0:
             count_thresh = 68 * sum(hist_smooth) / 100
             count = hist_smooth[int(modal_intensity)]
             index_bin = 1
             while count < count_thresh:
-                if modal_intensity + index_bin <= len(hist_smooth):
+                if modal_intensity + index_bin <= (len(hist_smooth) - 1):
                     count = count + hist_smooth[int(modal_intensity + index_bin)]
                 if modal_intensity - index_bin >= 0:
                     count = count + hist_smooth[int(modal_intensity - index_bin)]
